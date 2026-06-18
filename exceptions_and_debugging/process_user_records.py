@@ -137,3 +137,64 @@ Explanation:
 =================================================
 
 """
+
+def process_records(records):
+    clean_records = []
+    error_log = []
+
+    for i, record in enumerate(records):
+        try:
+            # Attempt to access required keys
+            name = record["name"]
+            age = int(record["age"])       # may raise ValueError
+            score = float(record["score"]) # may raise ValueError
+
+        except (KeyError, TypeError) as e:
+            # Multiple exception types handled together
+            error_log.append((i, type(e).__name__, str(e)))
+
+        except ValueError as e:
+            # Inspect exception object
+            error_log.append((i, type(e).__name__, str(e)))
+
+        else:
+            # Runs only if no exception occurred
+            clean_records.append({
+                "name": name,
+                "age": age,
+                "score": score
+            })
+
+    return clean_records, error_log
+
+
+def process_strict(records):
+    clean_records, error_log = process_records(records)
+
+    if error_log:
+        # Re-raise with summary of failures
+        raise RuntimeError(f"{len(error_log)} record(s) failed to process") from None
+
+    return clean_records
+
+# Driver code
+if __name__ == "__main__":
+    records = [
+        {"name": "Alice", "age": "25",   "score": "88.5"},
+        {"name": "Bob",   "age": "abc",  "score": "70"},
+        {"name": "Carol", "age": "30"},                       # missing "score"
+        "not a dict",                                          # wrong type
+        {"name": "Dan",   "age": "40",   "score": "55.5"},
+    ]
+
+    clean_records, error_log = process_records(records)
+    print("Clean Records:")
+    print(clean_records)
+    print("Error Log:")
+    print(error_log)
+
+    try:
+        process_strict(records)
+    except RuntimeError as e:
+        print(f"Strict mode raised: {e}")
+
